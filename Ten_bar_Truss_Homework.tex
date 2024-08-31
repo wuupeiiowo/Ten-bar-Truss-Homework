@@ -1,0 +1,127 @@
+\documentclass[a4paper]{article}
+\usepackage{geometry}
+\usepackage{xeCJK}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{float}
+\setCJKmainfont[AutoFakeBold={3}]{AR PL UKai TW}
+\XeTeXlinebreaklocale "zh"
+\geometry{a4paper, left=2cm, right=2cm,top=2.5cm, bottom=2.5cm}
+
+\title{Homework : Ten-bar Truss}
+\author{吳培慈}
+\date{August 2024}
+
+\begin{document}
+\maketitle
+\section{Question}
+
+\begin{figure}[h]
+    \centering \includegraphics{tenbartruss.png}
+    \caption{Ten-bar Truss}
+\end{figure}
+
+\large
+\textbf{Problem Definition}
+\\在已知條件下，給定桿件截面半徑，求出各桿件的\textbf{位移、應力、反作用力}:
+\begin{itemize}
+    \item{整體架構處於靜力平衡的情況下}
+    \item{所有桿件截面皆為圓形}
+    \item{材料為鋼，楊氏係數$E = 200\;$GPa，密度$\rho = 7860\;kg/m^3$，降伏強度  $\sigma_{y}= 250\;$MPa }
+    \item{平行桿件宇鉛直桿件(桿件1至桿件6)長度皆為9.14m}
+    \item{桿件1至6截面半徑相同為$r_{1}$，桿件7至10截面半徑相同為$r_{2}$}
+    \item{所有桿件半徑的最佳化範圍為0.001至0.5之間}
+    \item{在節點2和節點4上的負載F皆為$1.0\times10^7$ N向下}
+\end{itemize}
+
+\large
+\textbf{Optimization problem}
+\[\min_{r_{1},r_{2}} f(r_{1},r_{2}) = \sum_{i=1}^6 m_{i}(r_{1})+\sum_{i=7}^10 m_{i}(r_{2})\]
+\qquad subject to
+\begin{align*}
+|\sigma_{i}|&\leq\sigma_{y} \\
+\Delta s_{2}&\leq 0.002
+\end{align*}
+\qquad where
+\begin{align*}
+&f:\text{所有桿件的質量}\\
+&\Delta s_{2}:\text{node2的位移}\\
+&\sigma_{y}:\text{降伏應力}\\
+&\sigma_{i}:\text{所有桿件的應力}\\
+\end{align*}
+
+\section{Solution}
+    \subsection{Step1 :Element Table}
+    將節點與元素相關數值整理成表格
+    \begin{figure}[h]
+    \centering \includegraphics[width=0.4\textwidth]{node.png}
+    \caption{節點座標}
+    \end{figure}
+    
+    \begin{figure}[h]
+    \centering \includegraphics[width=1\textwidth]{element.png}
+    \caption{元素表格}
+    \end{figure}
+
+    \subsection{Step2 :Stiffness Matrix}
+    單一元素的剛性矩陣(4x4)為\\
+    \begin{figure}[H]
+    \centering \includegraphics{K(4x4).png}
+    \end{figure}
+    將其整理取得各元素的剛性矩陣後並進一步得出整體結構的剛性矩陣(大小為12x12)
+
+    \subsection{Step3 :Displacement}
+    node5、6為固定端，因此在x、y方向無位移:
+    \[Q_{9} = Q_{10} = Q_{11} = Q_{12} = 0\]
+    計算其餘節點的位移:
+    \[Q^T = K^{-1}\,F^T\]
+    最佳化求解為:
+    \begin{figure}[H]
+    \centering \includegraphics[width=0.18\textwidth]{Q_ans.png}
+    \end{figure}
+    
+    \subsection{Step4 :Stress}
+    應力與位移Q的關係式:
+    \[\sigma = \frac{E_{e}}{l_{e}}[-c\ -s\ \ c\ \ s]Q\]
+    最佳化求解為:
+    \begin{figure}[H]
+    \centering \includegraphics[width=0.6\textwidth]{stress_ans.png}
+    \end{figure}
+    
+    \newpage
+    \subsection{Step5 :Reaction Force}
+    反作用力作用在node5、6，其關係式為:
+    \[R = KQ\]
+    最佳化求解為:
+    \begin{figure}[H]
+    \centering \includegraphics[width=0.2\textwidth]{R_ans.png}
+    \end{figure}
+
+\section{Result}
+使用fmincon進行最佳化後，得其最佳化值與最佳解:
+\[(r_{1},r_{2}) = (0.3,0.2663)\qquad f = 212410\]
+
+\section{Code}
+\textbf{<main.m>}
+    \begin{figure}[H]
+    \centering \includegraphics[width=0.75\textwidth]{main.m.png}
+    \end{figure}
+    
+\textbf{<object.m>}
+    \begin{figure}[H]
+    \centering \includegraphics[width=0.5\textwidth]{object.m.png}
+    \end{figure}
+    
+\textbf{<nonlcon.m>}
+    \begin{figure}[H]
+    \centering \includegraphics[width=0.5\textwidth]{nonlcon.m.png}
+    \end{figure}
+    
+\textbf{<tenbarTruss.m>}
+    \begin{figure}[H]
+    \centering \includegraphics[width=0.9\textwidth]{tenbar_1.m.png}
+    \end{figure}
+    \begin{figure}[H]
+    \centering \includegraphics[width=0.9\textwidth]{tenbar_2.m.png}
+    \end{figure}
+\end{document}
